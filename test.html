@@ -1,0 +1,1157 @@
+<!doctype html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>MindDiary AI - 단계 진행 모드 토글</title>
+    <style>
+        :root {
+            --bg: #f8e6ea;
+            --card: #fff;
+            --text: #222;
+            --muted: #6b6b6b;
+            --border: #e9e9e9;
+            --pink: #ff6f86;
+            --pink2: #ff7b93;
+            --soft: #fff6f8;
+            --shadow: 0 12px 30px rgba(0, 0, 0, .08);
+        }
+
+        * {
+            box-sizing: border-box
+        }
+
+        body {
+            margin: 0;
+            font-family: system-ui, -apple-system, "Pretendard", "Noto Sans KR", sans-serif;
+            background: var(--bg);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            padding: 40px 16px;
+            color: var(--text);
+        }
+
+        .wrap {
+            width: min(980px, 100%)
+        }
+
+        .card {
+            background: var(--card);
+            border-radius: 22px;
+            padding: 28px;
+            box-shadow: var(--shadow);
+        }
+
+        h1 {
+            margin: 0 0 6px;
+            font-size: 24px;
+            font-weight: 900;
+            letter-spacing: -.3px;
+            text-align: center;
+        }
+
+        .sub {
+            margin: 0 0 18px;
+            text-align: center;
+            color: var(--muted);
+            font-size: 13px;
+            line-height: 1.5;
+        }
+
+        .title {
+            margin: 22px 0 10px;
+            font-weight: 900;
+            font-size: 15px
+        }
+
+        .hint {
+            margin: 0 0 12px;
+            color: var(--muted);
+            font-size: 13px;
+            line-height: 1.5
+        }
+
+        textarea {
+            width: 100%;
+            min-height: 140px;
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 12px 12px;
+            font-size: 14px;
+            outline: none;
+            background: #fff;
+        }
+
+        textarea:focus {
+            border-color: rgba(255, 111, 134, .7);
+            box-shadow: 0 0 0 4px rgba(255, 111, 134, .12);
+        }
+
+        .actions {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+            flex-wrap: wrap;
+            margin-top: 14px;
+        }
+
+        .btn {
+            height: 44px;
+            padding: 0 14px;
+            border-radius: 12px;
+            font-weight: 900;
+            border: 1px solid transparent;
+            cursor: pointer;
+            transition: transform .08s ease, box-shadow .15s ease, background .15s ease;
+            user-select: none;
+        }
+
+        .btn:active {
+            transform: translateY(1px)
+        }
+
+        .primary {
+            background: linear-gradient(90deg, var(--pink), var(--pink2));
+            color: #fff;
+            box-shadow: 0 10px 20px rgba(255, 111, 134, .25);
+        }
+
+        .ghost {
+            background: #fff;
+            border-color: var(--border);
+            color: #333;
+        }
+
+        /* ✅ 모드 토글 바 */
+        .modeBar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            margin-top: 14px;
+            padding: 12px 14px;
+            border: 1px solid rgba(0, 0, 0, .08);
+            border-radius: 16px;
+            background: #fff;
+        }
+
+        .modeLeft {
+            min-width: 0;
+        }
+
+        .modeTitle {
+            font-weight: 900;
+            font-size: 13px;
+            margin: 0 0 3px;
+        }
+
+        .modeDesc {
+            margin: 0;
+            color: var(--muted);
+            font-size: 12px;
+            line-height: 1.35;
+        }
+
+        .switch {
+            flex: 0 0 auto;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            user-select: none;
+        }
+
+        .switchLabel {
+            font-size: 12px;
+            font-weight: 900;
+            color: #444;
+            white-space: nowrap;
+        }
+
+        .toggle {
+            width: 52px;
+            height: 30px;
+            border-radius: 999px;
+            border: 1px solid rgba(0, 0, 0, .12);
+            background: #fff;
+            padding: 3px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            transition: background .15s ease, border-color .15s ease;
+        }
+
+        .knob {
+            width: 24px;
+            height: 24px;
+            border-radius: 999px;
+            background: linear-gradient(90deg, var(--pink), var(--pink2));
+            transform: translateX(0);
+            transition: transform .18s ease;
+            box-shadow: 0 8px 16px rgba(255, 111, 134, .25);
+        }
+
+        .toggle.on {
+            background: rgba(255, 111, 134, .08);
+            border-color: rgba(255, 111, 134, .35);
+        }
+
+        .toggle.on .knob {
+            transform: translateX(22px);
+        }
+
+        /* 흐름 */
+        .flow {
+            margin-top: 18px;
+            border-top: 1px dashed rgba(0, 0, 0, .08);
+            padding-top: 18px;
+        }
+
+        .step {
+            margin-top: 14px;
+            border: 1px solid rgba(0, 0, 0, .08);
+            border-radius: 18px;
+            background: #fff;
+            overflow: hidden;
+        }
+
+        .step[hidden] {
+            display: none !important;
+        }
+
+        .stepHead {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            padding: 14px;
+            background: rgba(255, 111, 134, .06);
+            border-bottom: 1px solid rgba(255, 111, 134, .18);
+        }
+
+        .stepHeadLeft {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            min-width: 0;
+        }
+
+        .badge {
+            flex: 0 0 auto;
+            font-size: 12px;
+            font-weight: 900;
+            color: #ff4f6e;
+            padding: 6px 10px;
+            border-radius: 999px;
+            background: #fff;
+            border: 1px solid rgba(255, 111, 134, .25);
+        }
+
+        .stepTitle {
+            font-weight: 900;
+            font-size: 13px;
+            margin: 0;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .stepMeta {
+            font-size: 12px;
+            color: var(--muted);
+            margin-top: 3px;
+            line-height: 1.4;
+        }
+
+        .stepToggle {
+            flex: 0 0 auto;
+            border: 1px solid rgba(0, 0, 0, .12);
+            background: #fff;
+            padding: 8px 12px;
+            border-radius: 999px;
+            font-weight: 900;
+            cursor: pointer;
+        }
+
+        .stepBody {
+            padding: 14px
+        }
+
+        /* 질문/힌트 */
+        .aiQuestion {
+            margin: 0 0 10px;
+            padding: 12px;
+            border-radius: 14px;
+            border: 1px dashed rgba(255, 111, 134, .45);
+            background: var(--soft);
+            font-size: 13px;
+            line-height: 1.55;
+        }
+
+        .aiQuestion b {
+            color: #ff4f6e
+        }
+
+        /* 필드 */
+        .grid2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-top: 10px;
+        }
+
+        @media (max-width: 860px) {
+            .grid2 {
+                grid-template-columns: 1fr
+            }
+        }
+
+        .field {
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 12px;
+            background: #fff;
+            margin-top: 10px;
+        }
+
+        .labelRow {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 10px;
+            margin-bottom: 8px;
+        }
+
+        .label {
+            font-weight: 900;
+            font-size: 13px
+        }
+
+        .miniHint {
+            color: var(--muted);
+            font-size: 12px;
+            line-height: 1.4;
+            text-align: right;
+        }
+
+        .input {
+            width: 100%;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 10px 10px;
+            font-size: 13px;
+            outline: none;
+            background: #fff;
+        }
+
+        .input:focus {
+            border-color: rgba(255, 111, 134, .7);
+            box-shadow: 0 0 0 4px rgba(255, 111, 134, .12);
+        }
+
+        .candidatePanel {
+            margin-top: 10px;
+            border: 1px solid rgba(255, 111, 134, .22);
+            background: rgba(255, 111, 134, .06);
+            border-radius: 14px;
+            padding: 10px;
+        }
+
+        .candidateTop {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            margin-bottom: 8px;
+        }
+
+        .candidateTop strong {
+            font-size: 12px
+        }
+
+        .candidateTop small {
+            font-size: 12px;
+            color: var(--muted)
+        }
+
+        .chips {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px
+        }
+
+        .chip {
+            font-size: 12px;
+            padding: 7px 10px;
+            border-radius: 999px;
+            border: 1px solid var(--border);
+            background: #fff;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .chip:hover {
+            background: #fafafa
+        }
+
+        .addRow {
+            margin-top: 10px;
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .addRow input {
+            flex: 1 1 220px;
+            min-width: 180px
+        }
+
+        .smallBtn {
+            height: 38px;
+            padding: 0 12px;
+            border-radius: 12px;
+            font-weight: 900;
+            border: 1px solid rgba(0, 0, 0, .12);
+            background: #fff;
+            cursor: pointer;
+        }
+
+        .smallBtn:hover {
+            background: #fafafa
+        }
+
+        /* ✅ 다음 버튼 */
+        .nextBar {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 14px;
+            flex-wrap: wrap;
+        }
+
+        .warn {
+            margin-top: 10px;
+            font-size: 12px;
+            color: #b54556;
+            background: rgba(255, 111, 134, .10);
+            border: 1px solid rgba(255, 111, 134, .22);
+            padding: 10px 12px;
+            border-radius: 12px;
+            display: none;
+            line-height: 1.45;
+            font-weight: 800;
+        }
+
+        .warn.show {
+            display: block;
+        }
+
+        /* =============================
+       ✅ 결과 카드 UI
+       ============================= */
+        .finalWrap {
+            margin-top: 14px;
+            border-radius: 18px;
+            background: #fff;
+            border: 1px solid rgba(0, 0, 0, .06);
+            padding: 14px;
+            box-shadow: 0 10px 24px rgba(0, 0, 0, .06);
+        }
+
+        .finalList {
+            display: grid;
+            gap: 12px;
+        }
+
+        .finalCard {
+            border: 1px solid rgba(0, 0, 0, .10);
+            border-radius: 18px;
+            background: #fff;
+            padding: 14px;
+        }
+
+        .finalHead {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 900;
+            color: #3a3a3a;
+            margin-bottom: 10px;
+        }
+
+        .iconBox {
+            width: 18px;
+            height: 18px;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            line-height: 1;
+            border: 1px solid rgba(0, 0, 0, .12);
+            background: #fff;
+        }
+
+        .finalBody {
+            color: #222;
+            font-size: 14px;
+            line-height: 1.7;
+            min-height: 26px;
+            padding-left: 2px;
+        }
+
+        .placeholder {
+            color: #8a8a8a;
+            font-weight: 700;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="wrap">
+        <div class="card">
+            <h1>MindDiary AI 데모</h1>
+            <p class="sub">✅ “집중 모드(한 단계씩)” / “전체 보기”를 토글로 선택할 수 있어요.</p>
+
+            <!-- 0) 일기 입력 -->
+            <div class="title">0) 오늘의 기록</div>
+            <p class="hint">일기를 쓰고 <b>“AI 분석 시작(데모)”</b>을 누르면 Step 입력 흐름이 열립니다.</p>
+            <textarea id="diary">오늘 회의에서 내 의견을 말했는데 반응이 애매했다.
+그 뒤로 계속 내가 말실수한 건 아닌지 생각이 떠나지 않았다.
+집에 와서도 마음이 답답하고, 숨이 얕아지고, 괜히 SNS만 계속 봤다.</textarea>
+
+            <div class="actions">
+                <button class="btn ghost" id="resetBtn" type="button">초기화</button>
+                <button class="btn primary" id="demoBtn" type="button">AI 분석 시작(데모)</button>
+            </div>
+
+            <!-- ✅ 진행 모드 토글 -->
+            <div class="modeBar" id="modeBar" hidden>
+                <div class="modeLeft">
+                    <p class="modeTitle">진행 방식</p>
+                    <p class="modeDesc">집중 모드 ON이면 STEP 1→2→3 순서로만 보여요. OFF면 전체를 한 번에 편집할 수 있어요.</p>
+                </div>
+                <div class="switch">
+                    <span class="switchLabel" id="modeText">집중 모드 ON</span>
+                    <button class="toggle on" id="modeToggle" type="button" aria-label="toggle">
+                        <span class="knob"></span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- 입력 흐름 -->
+            <section class="flow" id="flowArea" hidden>
+
+                <!-- STEP 1 -->
+                <div class="step" id="step1">
+                    <div class="stepHead">
+                        <div class="stepHeadLeft">
+                            <span class="badge">STEP 1</span>
+                            <div>
+                                <p class="stepTitle">반복 신호(언제부터 / 빈도 / 반복상황)</p>
+                                <div class="stepMeta">후보 클릭 → 입력칸 자동 채움</div>
+                            </div>
+                        </div>
+                        <button class="stepToggle" type="button" data-toggle="#step1Body">접기</button>
+                    </div>
+
+                    <div class="stepBody" id="step1Body">
+                        <div class="aiQuestion" id="reflectionBox" hidden></div>
+
+                        <div class="grid2">
+                            <div class="field">
+                                <div class="labelRow">
+                                    <div class="label">언제부터</div>
+                                    <div class="miniHint">대략으로 적어도 OK</div>
+                                </div>
+                                <input class="input" id="sinceInput" placeholder="예) 회의 직후부터" />
+                                <div class="candidatePanel" id="sincePanel" hidden>
+                                    <div class="candidateTop"><strong>AI 후보</strong><small>클릭해서 적용</small></div>
+                                    <div class="chips" id="sinceChips"></div>
+                                    <div class="addRow">
+                                        <input class="input" id="sinceAdd" placeholder="후보 추가 예) 점심 이후부터" />
+                                        <button class="smallBtn" type="button" data-add="since">추가</button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="field">
+                                <div class="labelRow">
+                                    <div class="label">빈도</div>
+                                    <div class="miniHint">정확히 몰라도 됨</div>
+                                </div>
+                                <input class="input" id="freqInput" placeholder="예) 이번 주 2~3회" />
+                                <div class="candidatePanel" id="freqPanel" hidden>
+                                    <div class="candidateTop"><strong>AI 후보</strong><small>클릭해서 적용</small></div>
+                                    <div class="chips" id="freqChips"></div>
+                                    <div class="addRow">
+                                        <input class="input" id="freqAdd" placeholder="후보 추가 예) 주 1회" />
+                                        <button class="smallBtn" type="button" data-add="freq">추가</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="field">
+                            <div class="labelRow">
+                                <div class="label">반복 상황</div>
+                                <div class="miniHint">트리거가 되는 순간</div>
+                            </div>
+                            <input class="input" id="patternInput" placeholder="예) 회의/피드백 직후" />
+                            <div class="candidatePanel" id="patternPanel" hidden>
+                                <div class="candidateTop"><strong>AI 후보</strong><small>클릭해서 적용</small></div>
+                                <div class="chips" id="patternChips"></div>
+                                <div class="addRow">
+                                    <input class="input" id="patternAdd" placeholder="후보 추가 예) 혼자 있을 때" />
+                                    <button class="smallBtn" type="button" data-add="pattern">추가</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="warn" id="warn1"></div>
+
+                        <div class="nextBar">
+                            <button class="btn ghost" id="next1" type="button">다음(→ STEP 2)</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- STEP 2 -->
+                <div class="step" id="step2">
+                    <div class="stepHead">
+                        <div class="stepHeadLeft">
+                            <span class="badge">STEP 2</span>
+                            <div>
+                                <p class="stepTitle">상황 → 몸 → 생각</p>
+                                <div class="stepMeta">후보 클릭 → 입력칸 자동 채움</div>
+                            </div>
+                        </div>
+                        <button class="stepToggle" type="button" data-toggle="#step2Body">접기</button>
+                    </div>
+
+                    <div class="stepBody" id="step2Body">
+                        <div class="grid2">
+                            <div class="field">
+                                <div class="labelRow">
+                                    <div class="label">상황</div>
+                                    <div class="miniHint">어떤 트리거?</div>
+                                </div>
+                                <input class="input" id="situationInput" placeholder="예) 상대 반응이 애매했을 때" />
+                                <div class="candidatePanel" id="situationPanel" hidden>
+                                    <div class="candidateTop"><strong>AI 후보</strong><small>클릭해서 적용</small></div>
+                                    <div class="chips" id="situationChips"></div>
+                                    <div class="addRow">
+                                        <input class="input" id="situationAdd" placeholder="후보 추가 예) 답장이 늦을 때" />
+                                        <button class="smallBtn" type="button" data-add="situation">추가</button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="field">
+                                <div class="labelRow">
+                                    <div class="label">몸반응</div>
+                                    <div class="miniHint">몸에서 먼저 온 신호</div>
+                                </div>
+                                <input class="input" id="bodyInput" placeholder="예) 숨이 얕아짐" />
+                                <div class="candidatePanel" id="bodyPanel" hidden>
+                                    <div class="candidateTop"><strong>AI 후보</strong><small>클릭해서 적용</small></div>
+                                    <div class="chips" id="bodyChips"></div>
+                                    <div class="addRow">
+                                        <input class="input" id="bodyAdd" placeholder="후보 추가 예) 가슴 답답함" />
+                                        <button class="smallBtn" type="button" data-add="body">추가</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="field">
+                            <div class="labelRow">
+                                <div class="label">생각</div>
+                                <div class="miniHint">머릿속 자동문장</div>
+                            </div>
+                            <input class="input" id="thoughtInput" placeholder="예) 내가 이상하게 보였을까?" />
+                            <div class="candidatePanel" id="thoughtPanel" hidden>
+                                <div class="candidateTop"><strong>AI 후보</strong><small>클릭해서 적용</small></div>
+                                <div class="chips" id="thoughtChips"></div>
+                                <div class="addRow">
+                                    <input class="input" id="thoughtAdd" placeholder="후보 추가 예) 말실수한 것 같아" />
+                                    <button class="smallBtn" type="button" data-add="thought">추가</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="warn" id="warn2"></div>
+
+                        <div class="nextBar">
+                            <button class="btn ghost" id="prev2" type="button">이전(← STEP 1)</button>
+                            <button class="btn ghost" id="next2" type="button">다음(→ STEP 3)</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- STEP 3 -->
+                <div class="step" id="step3">
+                    <div class="stepHead">
+                        <div class="stepHeadLeft">
+                            <span class="badge">STEP 3</span>
+                            <div>
+                                <p class="stepTitle">내일 실험(작게)</p>
+                                <div class="stepMeta">AI 힌트가 있으면 클릭해서 넣고, 없으면 직접 작성</div>
+                            </div>
+                        </div>
+                        <button class="stepToggle" type="button" data-toggle="#step3Body">접기</button>
+                    </div>
+
+                    <div class="stepBody" id="step3Body">
+                        <div class="aiQuestion" id="hintBox" hidden></div>
+
+                        <div class="field">
+                            <div class="labelRow">
+                                <div class="label">내일 실험(작게)</div>
+                                <div class="miniHint">1~3분짜리 추천</div>
+                            </div>
+                            <input class="input" id="tomorrowInput" placeholder="예) 회의 직후 호흡 3번" />
+                            <div class="candidatePanel" id="tomorrowPanel" hidden>
+                                <div class="candidateTop"><strong>AI 후보</strong><small>클릭해서 적용</small></div>
+                                <div class="chips" id="tomorrowChips"></div>
+                                <div class="addRow">
+                                    <input class="input" id="tomorrowAdd" placeholder="후보 추가 예) 물 한 잔 마시기" />
+                                    <button class="smallBtn" type="button" data-add="tomorrow">추가</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="warn" id="warn3"></div>
+
+                        <div class="actions">
+                            <button class="btn ghost" id="fillExampleBtn" type="button">예시 자동 채우기</button>
+                            <button class="btn primary" id="showFinalBtn" type="button">저장 & 결과 보기</button>
+                        </div>
+
+                        <!-- ✅ 결과 카드 -->
+                        <div class="finalWrap" id="finalExample" hidden>
+                            <div class="finalList">
+                                <div class="finalCard">
+                                    <div class="finalHead">
+                                        <span class="iconBox">✅</span>
+                                        <span>하루 기록 카드</span>
+                                    </div>
+                                    <div class="finalBody" id="finalDaily"><span class="placeholder">-</span></div>
+                                </div>
+
+                                <div class="finalCard">
+                                    <div class="finalHead">
+                                        <span class="iconBox">🔁</span>
+                                        <span>반복 신호</span>
+                                    </div>
+                                    <div class="finalBody" id="finalSignals"><span class="placeholder">-</span></div>
+                                </div>
+
+                                <div class="finalCard">
+                                    <div class="finalHead">
+                                        <span class="iconBox">🧭</span>
+                                        <span>상황 → 몸 → 생각</span>
+                                    </div>
+                                    <div class="finalBody" id="finalFlow"><span class="placeholder">-</span></div>
+                                </div>
+
+                                <div class="finalCard">
+                                    <div class="finalHead">
+                                        <span class="iconBox">📚</span>
+                                        <span>감정 언어 요약</span>
+                                    </div>
+                                    <div class="finalBody" id="finalLit"><span class="placeholder">-</span></div>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+            </section>
+        </div>
+    </div>
+
+    <script>
+        const $ = (id) => document.getElementById(id);
+
+        const demoResult = {
+            observation_guess: {
+                since: ["회의 직후부터", "퇴근길부터", "집에 온 뒤부터"],
+                frequency: ["이번 주 2~3회", "거의 매일", "오랜만(특정 사건 후)"],
+                pattern: ["회의/피드백 직후", "혼자 있을 때", "SNS 볼 때"]
+            },
+            flow_guess: {
+                situation: ["회의에서 의견 말한 직후", "상대 반응이 애매했을 때", "집에서 혼자 있을 때"],
+                body: ["가슴 답답함", "숨이 얕아짐", "어깨/턱에 힘 들어감"],
+                thought: ["말실수한 것 같아", "내가 이상하게 보였을까?", "계속 곱씹게 돼"]
+            },
+            reflection_question: "감정이 올라오기 시작한 ‘첫 신호’는 몸에서 어디였을까?",
+            tomorrow_hint: "회의 직후 2분만 자리에서 일어나 호흡을 3번 확인해보기",
+            emotion_language_summary: "불안 · “확신이 없을 때 마음은 미래를 대신 살아버린다” · 『노르웨이의 숲』"
+        };
+
+        // ✅ 진행 모드 상태: true = 집중 모드(한 단계씩)
+        let focusMode = true;
+        let currentStep = 1;
+
+        function escapeHtml(s) {
+            return (s || "")
+                .replaceAll("&", "&amp;")
+                .replaceAll("<", "&lt;")
+                .replaceAll(">", "&gt;")
+                .replaceAll('"', "&quot;");
+        }
+
+        function showBox(id, label, content) {
+            const el = $(id);
+            if (!content) { el.hidden = true; el.textContent = ""; return; }
+            el.hidden = false;
+            el.innerHTML = `<b>${escapeHtml(label)}</b> ${escapeHtml(content)}`;
+        }
+
+        function renderChips(containerId, items, targetInputId) {
+            const box = $(containerId);
+            box.innerHTML = "";
+
+            if (!items || !items.length) {
+                const empty = document.createElement("div");
+                empty.style.color = "#777";
+                empty.style.fontSize = "12px";
+                empty.textContent = "후보가 없어요.";
+                box.appendChild(empty);
+                return;
+            }
+
+            items.slice(0, 5).forEach(text => {
+                const chip = document.createElement("button");
+                chip.type = "button";
+                chip.className = "chip";
+                chip.textContent = text;
+                chip.addEventListener("click", () => {
+                    $(targetInputId).value = text;
+                    $(targetInputId).focus();
+                });
+                box.appendChild(chip);
+            });
+        }
+
+        function showAI(result) {
+            $("flowArea").hidden = false;
+            $("modeBar").hidden = false;
+
+            showBox("reflectionBox", "오늘의 관찰 질문:", result?.reflection_question);
+            showBox("hintBox", "내일 실험 후보:", result?.tomorrow_hint);
+
+            const g = result?.observation_guess || {};
+            renderChips("sinceChips", g.since || [], "sinceInput");
+            renderChips("freqChips", g.frequency || [], "freqInput");
+            renderChips("patternChips", g.pattern || [], "patternInput");
+            $("sincePanel").hidden = false;
+            $("freqPanel").hidden = false;
+            $("patternPanel").hidden = false;
+
+            const f = result?.flow_guess || {};
+            renderChips("situationChips", f.situation || [], "situationInput");
+            renderChips("bodyChips", f.body || [], "bodyInput");
+            renderChips("thoughtChips", f.thought || [], "thoughtInput");
+            $("situationPanel").hidden = false;
+            $("bodyPanel").hidden = false;
+            $("thoughtPanel").hidden = false;
+
+            $("tomorrowPanel").hidden = false;
+            const tBox = $("tomorrowChips");
+            tBox.innerHTML = "";
+            if (result?.tomorrow_hint) {
+                const chip = document.createElement("button");
+                chip.type = "button";
+                chip.className = "chip";
+                chip.textContent = result.tomorrow_hint;
+                chip.addEventListener("click", () => {
+                    $("tomorrowInput").value = result.tomorrow_hint;
+                    $("tomorrowInput").focus();
+                });
+                tBox.appendChild(chip);
+
+                if (!$("tomorrowInput").value.trim()) $("tomorrowInput").value = result.tomorrow_hint;
+            }
+
+            // 초기 화면 반영
+            currentStep = 1;
+            applyStepVisibility();
+            $("step1").scrollIntoView({ behavior: "smooth", block: "start" });
+        }
+
+        // 후보 추가 버튼
+        const addMap = {
+            since: { addId: "sinceAdd", chipsId: "sinceChips", inputId: "sinceInput" },
+            freq: { addId: "freqAdd", chipsId: "freqChips", inputId: "freqInput" },
+            pattern: { addId: "patternAdd", chipsId: "patternChips", inputId: "patternInput" },
+            situation: { addId: "situationAdd", chipsId: "situationChips", inputId: "situationInput" },
+            body: { addId: "bodyAdd", chipsId: "bodyChips", inputId: "bodyInput" },
+            thought: { addId: "thoughtAdd", chipsId: "thoughtChips", inputId: "thoughtInput" },
+            tomorrow: { addId: "tomorrowAdd", chipsId: "tomorrowChips", inputId: "tomorrowInput" }
+        };
+
+        function addCandidate(type) {
+            const conf = addMap[type];
+            if (!conf) return;
+
+            const v = $(conf.addId).value.trim();
+            if (!v) return;
+
+            const box = $(conf.chipsId);
+            const exists = Array.from(box.querySelectorAll(".chip")).some(c => c.textContent === v);
+            if (!exists) {
+                const chip = document.createElement("button");
+                chip.type = "button";
+                chip.className = "chip";
+                chip.textContent = v;
+                chip.addEventListener("click", () => {
+                    $(conf.inputId).value = v;
+                    $(conf.inputId).focus();
+                });
+                box.appendChild(chip);
+            }
+
+            $(conf.inputId).value = v;
+            $(conf.addId).value = "";
+        }
+
+        document.addEventListener("click", (e) => {
+            const btn = e.target.closest("[data-add]");
+            if (!btn) return;
+            addCandidate(btn.getAttribute("data-add"));
+        });
+
+        function fillExampleSelection() {
+            $("sinceInput").value = "회의 직후부터";
+            $("freqInput").value = "이번 주 2~3회";
+            $("patternInput").value = "회의/피드백 직후";
+
+            $("situationInput").value = "상대 반응이 애매했을 때";
+            $("bodyInput").value = "숨이 얕아짐";
+            $("thoughtInput").value = "내가 이상하게 보였을까?";
+
+            $("tomorrowInput").value = demoResult.tomorrow_hint;
+
+            ["sincePanel", "freqPanel", "patternPanel", "situationPanel", "bodyPanel", "thoughtPanel", "tomorrowPanel"]
+                .forEach(id => $(id).hidden = false);
+        }
+
+        // ✅ 결과 카드에 값 채우기
+        function showFinalExample() {
+            const tomorrow = $("tomorrowInput").value.trim();
+            $("finalDaily").innerHTML = tomorrow ? escapeHtml(tomorrow) : `<span class="placeholder">-</span>`;
+
+            const since = $("sinceInput").value.trim();
+            const freq = $("freqInput").value.trim();
+            const pattern = $("patternInput").value.trim();
+
+            const situation = $("situationInput").value.trim();
+            const body = $("bodyInput").value.trim();
+            const thought = $("thoughtInput").value.trim();
+
+            const signals =
+                (since || freq || pattern)
+                    ? `• <b>언제부터</b>: ${escapeHtml(since || "-")}<br/>
+             • <b>빈도</b>: ${escapeHtml(freq || "-")}<br/>
+             • <b>반복 상황</b>: ${escapeHtml(pattern || "-")}`
+                    : `<span class="placeholder">-</span>`;
+            $("finalSignals").innerHTML = signals;
+
+            const flow =
+                (situation || body || thought)
+                    ? `• <b>상황</b>: ${escapeHtml(situation || "-")}<br/>
+             • <b>몸</b>: ${escapeHtml(body || "-")}<br/>
+             • <b>생각</b>: ${escapeHtml(thought || "-")}`
+                    : `<span class="placeholder">-</span>`;
+            $("finalFlow").innerHTML = flow;
+
+            $("finalLit").innerHTML = escapeHtml(demoResult.emotion_language_summary || "-");
+
+            $("finalExample").hidden = false;
+            $("finalExample").scrollIntoView({ behavior: "smooth", block: "start" });
+        }
+
+        function resetAll() {
+            $("flowArea").hidden = true;
+            $("finalExample").hidden = true;
+            $("modeBar").hidden = true;
+
+            [
+                "sinceInput", "freqInput", "patternInput",
+                "situationInput", "bodyInput", "thoughtInput",
+                "tomorrowInput",
+                "sinceAdd", "freqAdd", "patternAdd",
+                "situationAdd", "bodyAdd", "thoughtAdd", "tomorrowAdd"
+            ].forEach(id => { if ($(id)) $(id).value = ""; });
+
+            ["sincePanel", "freqPanel", "patternPanel", "situationPanel", "bodyPanel", "thoughtPanel", "tomorrowPanel"]
+                .forEach(id => $(id).hidden = true);
+
+            $("reflectionBox").hidden = true;
+            $("hintBox").hidden = true;
+
+            ["warn1", "warn2", "warn3"].forEach(id => {
+                $(id).classList.remove("show");
+                $(id).textContent = "";
+            });
+
+            $("finalDaily").innerHTML = `<span class="placeholder">-</span>`;
+            $("finalSignals").innerHTML = `<span class="placeholder">-</span>`;
+            $("finalFlow").innerHTML = `<span class="placeholder">-</span>`;
+            $("finalLit").innerHTML = `<span class="placeholder">-</span>`;
+
+            focusMode = true;
+            currentStep = 1;
+            setToggleUI();
+            applyStepVisibility();
+        }
+
+        // Step 접기/펼치기(유지)
+        document.addEventListener("click", (e) => {
+            const btn = e.target.closest(".stepToggle");
+            if (!btn) return;
+            const targetSel = btn.getAttribute("data-toggle");
+            const target = document.querySelector(targetSel);
+            const hidden = target.style.display === "none";
+            target.style.display = hidden ? "block" : "none";
+            btn.textContent = hidden ? "접기" : "펼치기";
+        });
+
+        // =========================
+        // ✅ 집중 모드(한 단계씩) 로직
+        // =========================
+        function setToggleUI() {
+            const t = $("modeToggle");
+            const txt = $("modeText");
+            if (focusMode) {
+                t.classList.add("on");
+                txt.textContent = "집중 모드 ON";
+            } else {
+                t.classList.remove("on");
+                txt.textContent = "전체 보기";
+            }
+        }
+
+        function applyStepVisibility() {
+            // 집중 모드: currentStep만 노출
+            if (focusMode) {
+                $("step1").hidden = currentStep !== 1;
+                $("step2").hidden = currentStep !== 2;
+                $("step3").hidden = currentStep !== 3;
+            } else {
+                // 전체 보기: 전부 노출
+                $("step1").hidden = false;
+                $("step2").hidden = false;
+                $("step3").hidden = false;
+            }
+        }
+
+        function gotoStep(n) {
+            currentStep = n;
+            applyStepVisibility();
+            const el = $("step" + n);
+            if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+        }
+
+        function showWarn(step, msg) {
+            const el = $("warn" + step);
+            el.textContent = msg;
+            el.classList.add("show");
+            el.scrollIntoView({ behavior: "smooth", block: "center" });
+        }
+        function clearWarn(step) {
+            const el = $("warn" + step);
+            el.classList.remove("show");
+            el.textContent = "";
+        }
+
+        // 최소 검증(원하면 더 엄격/느슨하게 조절 가능)
+        function validateStep(step) {
+            if (step === 1) {
+                const since = $("sinceInput").value.trim();
+                const freq = $("freqInput").value.trim();
+                const pattern = $("patternInput").value.trim();
+                if (!since && !freq && !pattern) {
+                    showWarn(1, "STEP 1에서 최소 1개는 입력/선택해줘야 다음으로 넘어갈 수 있어요. (언제부터/빈도/반복 상황 중 아무거나 1개)");
+                    return false;
+                }
+                clearWarn(1);
+                return true;
+            }
+            if (step === 2) {
+                const situation = $("situationInput").value.trim();
+                const body = $("bodyInput").value.trim();
+                const thought = $("thoughtInput").value.trim();
+                if (!situation && !body && !thought) {
+                    showWarn(2, "STEP 2에서 최소 1개는 입력/선택해줘야 다음으로 넘어갈 수 있어요. (상황/몸/생각 중 아무거나 1개)");
+                    return false;
+                }
+                clearWarn(2);
+                return true;
+            }
+            if (step === 3) {
+                const tomorrow = $("tomorrowInput").value.trim();
+                if (!tomorrow) {
+                    showWarn(3, "STEP 3의 ‘내일 실험’을 한 줄만 적어줘도 좋아요. 예) 호흡 3번");
+                    return false;
+                }
+                clearWarn(3);
+                return true;
+            }
+            return true;
+        }
+
+        // ✅ 모드 토글 클릭
+        $("modeToggle").addEventListener("click", () => {
+            focusMode = !focusMode;
+            setToggleUI();
+
+            // 집중 모드로 켜면, 지금 어느 step을 보고 있었는지 유지
+            // 전체 보기로 끄면, 모든 step 펼치기
+            applyStepVisibility();
+
+            // UX: 토글 후 현재 step로 살짝 이동
+            if (focusMode) gotoStep(currentStep);
+        });
+
+        // ✅ 다음/이전 버튼
+        $("next1").addEventListener("click", () => {
+            if (!validateStep(1)) return;
+            gotoStep(2);
+        });
+        $("prev2").addEventListener("click", () => gotoStep(1));
+        $("next2").addEventListener("click", () => {
+            if (!validateStep(2)) return;
+            gotoStep(3);
+        });
+
+        // ✅ 저장 & 결과 보기
+        $("showFinalBtn").addEventListener("click", () => {
+            // 집중 모드에서는 Step3 검증, 전체 보기에서도 동일 적용
+            if (!validateStep(3)) return;
+            showFinalExample();
+        });
+
+        $("demoBtn").addEventListener("click", () => {
+            // 기본은 집중 모드 ON
+            focusMode = true;
+            currentStep = 1;
+            setToggleUI();
+            showAI(demoResult);
+        });
+
+        $("fillExampleBtn").addEventListener("click", () => fillExampleSelection());
+        $("resetBtn").addEventListener("click", () => resetAll());
+
+        // 초기 토글 UI
+        setToggleUI();
+        applyStepVisibility();
+    </script>
+</body>
+
+</html>
