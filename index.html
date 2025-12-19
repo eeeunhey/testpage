@@ -1084,10 +1084,7 @@
                 const situation = $("situationInput").value.trim();
                 const body = $("bodyInput").value.trim();
                 const thought = $("thoughtInput").value.trim();
-                if (!situation && !body && !thought) {
-                    showWarn(2, "STEP 2에서 최소 1개는 입력/선택해줘야 다음으로 넘어갈 수 있어요. (상황/몸/생각 중 아무거나 1개)");
-                    return false;
-                }
+
                 clearWarn(2);
                 return true;
             }
