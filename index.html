@@ -1076,10 +1076,7 @@
                 const since = $("sinceInput").value.trim();
                 const freq = $("freqInput").value.trim();
                 const pattern = $("patternInput").value.trim();
-                if (!since && !freq && !pattern) {
-                    showWarn(1, "STEP 1에서 최소 1개는 입력/선택해줘야 다음으로 넘어갈 수 있어요. (언제부터/빈도/반복 상황 중 아무거나 1개)");
-                    return false;
-                }
+
                 clearWarn(1);
                 return true;
             }
@@ -1096,10 +1093,7 @@
             }
             if (step === 3) {
                 const tomorrow = $("tomorrowInput").value.trim();
-                if (!tomorrow) {
-                    showWarn(3, "STEP 3의 ‘내일 실험’을 한 줄만 적어줘도 좋아요. 예) 호흡 3번");
-                    return false;
-                }
+
                 clearWarn(3);
                 return true;
             }
